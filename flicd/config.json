@@ -9,6 +9,12 @@
   "ports": {
     "5551/tcp": 5551
   },
+  "arch": [
+    "aarch64",
+    "amd64",
+    "armv7",
+    "i386"
+  ],
   "host_network": "true",
   "privileged": ["NET_ADMIN"],
   "options": {},
