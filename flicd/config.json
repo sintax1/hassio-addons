@@ -1,5 +1,5 @@
 {
-  "image": "pschmitt/hassio-addon-{arch}-flicd",
+  "image": "sintax/hassio-addon-{arch}-flicd",
   "name": "flicd",
   "version": "1.2",
   "slug": "flicd",
