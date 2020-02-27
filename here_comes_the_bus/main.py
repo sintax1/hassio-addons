@@ -185,9 +185,10 @@ def calculate_distance(location_from, location_to, attempts=0):
     resp = json.loads(resp.text)
 
     try:
-        return resp['routes'][0]['summary']['distance']
+        distance = resp['routes'][0]['summary']['distance']
+        return distance
     except KeyError:
-        logging.error("distance value not found in response: {}".format(resp))
+        logging.error("Unexpected response from Openroute API: {}".format(resp))
         if attempts > 0:
             return "Unknown"
         return calculate_distance(location_from, location_to, attempts=1)
