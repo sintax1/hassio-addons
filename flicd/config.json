@@ -1,5 +1,4 @@
 {
-  "image": "sintax/hassio-addon-{arch}-flicd",
   "name": "flicd",
   "version": "1.2",
   "slug": "flicd",
@@ -13,7 +12,6 @@
     "aarch64",
     "amd64",
     "armhf",
-    "armv7",
     "i386"
   ],
   "host_network": "true",
