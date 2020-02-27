@@ -21,9 +21,11 @@ RUN git clone https://github.com/50ButtonsEach/fliclib-linux-hci /tmp/src && \
 RUN cp /tmp/src/bin/${ARCH}/flicd /usr/bin/flicd && \
     chmod +x /usr/bin/flicd && \
     mkdir /config && \
-    rm -rf /tmp/src && \
-    apt-get remove --purge -y git && \
-    apt-get -y autoremove && \
+    rm -rf /tmp/src
+
+RUN apt-get remove --purge -y git
+
+RUN apt-get -y autoremove && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /data
