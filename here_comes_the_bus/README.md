@@ -31,4 +31,8 @@ The main.py script can be ran locally for testing outside of Home Assistant.
 2. Select 'Add new repository by URL'
 3. Enter the github repo where this add-on is stored 
 4. Click 'Add'
+5. Select the 'Here Comes the Bus' addon from the newly listed repository
+6. Install
+7. Configure
+8. Start
 
