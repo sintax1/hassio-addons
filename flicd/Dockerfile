@@ -11,12 +11,14 @@ RUN case $(arch) in \
         x86_64|amd64) export ARCH=x86_64 ;; \
         i386) export ARCH=i386 ;; \
         armv6l|armv7l|aarch64) export ARCH=armv6l ;; \
-    esac && \
-    apt-get update && \
-    apt-get install -y git && \
-    git clone https://github.com/50ButtonsEach/fliclib-linux-hci /tmp/src && \
-    ls -la /tmp/src/bin/ && \
-    cp /tmp/src/bin/${ARCH}/flicd /usr/bin/flicd && \
+    esac
+RUN apt-get update && \
+    apt-get install -y git
+
+RUN git clone https://github.com/50ButtonsEach/fliclib-linux-hci /tmp/src && \
+    ls -la /tmp/src/bin/
+    
+RUN cp /tmp/src/bin/${ARCH}/flicd /usr/bin/flicd && \
     chmod +x /usr/bin/flicd && \
     mkdir /config && \
     rm -rf /tmp/src && \
