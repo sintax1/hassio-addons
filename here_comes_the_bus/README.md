@@ -1,5 +1,5 @@
 # here_comes_the_bus
-A Home Assistant (HASS.IO) add-on that will monitor herecomesthebus.com and send Alexa notifications when the tracked school bus is within the configured range of the bus stop.
+A Home Assistant (HASS.IO) add-on that will monitor herecomesthebus.com and store the distance between the bust stop and a tracked school bus. Then, you can configure Haome Assistant Automations to do things such as send an Alexa notification when the bus is within 1 mile.
 
 ## Requirements
 
