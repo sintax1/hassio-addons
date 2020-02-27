@@ -1,0 +1,52 @@
+{
+    "name": "Here Comes the Bus",
+    "version": "1",
+    "slug": "here_comes_the_bus",
+    "description": "School bus tracking addon using Here Comes the Bus service",
+    "arch": ["armhf", "armv7", "aarch64", "amd64", "i386"],
+    "startup": "before",
+    "boot": "auto",
+    "homeassistant_api": true,
+    "options": {
+        "home_location": {
+            "long": "<bus stop location longitude>",
+            "lat": "<bus stop location latitude>"
+        },
+        "here_comes_the_bus_username": "<herecomesthebus.com username>",
+        "here_comes_the_bus_password": "<herecomesthebus.com password",
+        "here_comes_the_bus_school_code": "<herecomesthebus.com school code>",
+        "children": [
+            {
+                "name": "<herecomesthebus.com Child's name>",
+                "start_tracking_time_am": "<desired time to start tracking the am bus>",
+                "stop_tracking_time_am": "<desired time to stop tracking the am bus>",
+                "start_tracking_time_pm": "<desired time to start tracking the pm bus>",
+                "stop_tracking_time_pm": "<desired time to stop tracking the pm bus>"
+            }
+        ],
+        "openroute_api_key": "<openroute api key>",
+        "tracker_interval": 10,
+        "debug": false
+    },
+    "schema": {
+        "home_location": {
+            "long": "str",
+            "lat": "str"
+        },
+        "here_comes_the_bus_username": "str",
+        "here_comes_the_bus_password": "str",
+        "here_comes_the_bus_school_code": "str",
+        "children": [
+            {
+                "name": "str",
+                "start_tracking_time_am": "str",
+                "stop_tracking_time_am": "str",
+                "start_tracking_time_pm": "str",
+                "stop_tracking_time_pm": "str"
+            }
+        ],
+        "openroute_api_key": "str",
+        "tracker_interval": "int",
+        "debug": "bool"
+    }
+}
