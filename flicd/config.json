@@ -1,13 +1,6 @@
 {
-  "image": "pschmitt/home-assistant-addon-{arch}-flicd",
   "name": "flicd",
-  "arch": [
-    "armhf",
-    "aarch64",
-    "i386",
-    "amd64"
-  ],
-  "version": "1.3",
+  "version": "1.2",
   "slug": "flicd",
   "description": "React to flic button presses",
   "startup": "services",
@@ -15,10 +8,14 @@
   "ports": {
     "5551/tcp": 5551
   },
-  "host_network": "true",
-  "privileged": [
-    "NET_ADMIN"
+  "arch": [
+    "aarch64",
+    "amd64",
+    "armhf",
+    "i386"
   ],
+  "host_network": "true",
+  "privileged": ["NET_ADMIN"],
   "options": {},
   "schema": {}
 }
