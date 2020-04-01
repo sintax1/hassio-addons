@@ -7,6 +7,32 @@
     "startup": "before",
     "boot": "auto",
     "homeassistant_api": true,
-    "options": {},
-    "schema": {}
+    "options": {
+        "crestron": {
+            "IPAddress": "192.168.7.78",
+            "port": 41790,
+            "passcode": 1234
+        },
+        "MQTT": {
+            "broker": "192.168.7.254",
+            "port": 1883,
+            "username": "mqtt",
+            "password": "4FX6h2QilFbp58"
+        },
+        "debug": false
+    },
+    "schema": {
+        "crestron": {
+            "IPAddress": "str",
+            "port": "int",
+            "passcode": "int"
+        },
+        "MQTT": {
+            "broker": "str",
+            "port": "int",
+            "username": "str",
+            "password": "str"
+        },
+        "debug": "bool"
+    }
 }

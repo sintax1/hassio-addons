@@ -1,4 +1,3 @@
 paho-mqtt==1.5.0
-utils==0.9.0
 XML2Dict==0.2.2
 xmltodict==0.12.0
