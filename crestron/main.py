@@ -57,7 +57,7 @@ class CrestronMQTT:
         logging.debug("Connected with result code "+str(rc))
         logging.debug(mqtt.connack_string(rc))
 
-        self.client.message_callback_add('crestron/button', self.cb_button)
+        self.client.message_callback_add('crestron/digital/#', self.cb_button)
 
         self.client.subscribe("crestron/#")
         self.connected = True
@@ -86,16 +86,18 @@ class CrestronMQTT:
     @_callback
     def cb_button(self, client, userdata, msg):
         logging.debug("MQTT button: {}".format(msg))
-        data = json.loads(msg.payload)
-        self.crestron_client.button_press(data['id'])
+        button_id = msg.topic.split("/")[-1]
+        #data = json.loads(msg.payload)
+        self.crestron_client.button_press(button_id)
 
     def on_crestron_data_received(self, data_type, id, value):
-        payload = {
-            'data_type': data_type,
-            'id': id,
-            'value': value
-        }
-        self.client.publish('crestron/data', json.dumps(payload))
+        #payload = {
+        #    'data_type': data_type,
+        #    'id': id,
+        #    'value': value
+        #}
+        #self.client.publish('crestron/data', json.dumps(payload))
+        self.client.publish('crestron/%s/%s/state' % (data_type, id), value)
 
 def setup_logging():
     # Setup logging
