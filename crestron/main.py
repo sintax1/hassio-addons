@@ -27,6 +27,8 @@ class CrestronMQTT:
         self.crestron_passcode = crestron_passcode
         self.connected = False
         self.crestron_heartbeat_timeout = 60 # seconds
+        self.state = {}
+        self.publishing_enabled = True
 
     def connect(self):
         logging.debug("connect")
@@ -57,7 +59,8 @@ class CrestronMQTT:
         logging.debug("Connected with result code "+str(rc))
         logging.debug(mqtt.connack_string(rc))
 
-        self.client.message_callback_add('crestron/digital/#', self.cb_button)
+        self.client.message_callback_add('crestron/digital/+', self.cb_button)
+        self.client.message_callback_add('crestron/analog/+', self.cb_analog)
 
         self.client.subscribe("crestron/#")
         self.connected = True
@@ -81,13 +84,78 @@ class CrestronMQTT:
 
     # The callback for when a PUBLISH message is received from the server.
     def on_message(self, client, userdata, msg):
-        logging.debug(msg.topic+" "+str(msg.payload))
+        logging.debug("MQTT MSG: " + msg.topic + " " +str(msg.payload))
+
+    @_callback
+    def cb_analog(self, client, userdata, msg):
+        logging.debug("MQTT analog: {} {}".format(msg.topic, msg.payload))
+
+        analog_id = int(msg.topic.split('/')[2])
+        data = json.loads(msg.payload)
+        value = data['value']
+        increase_button = data['increase_button']
+        decrease_button = data['decrease_button']
+
+        # Disable mqtt updates to prevent a flood of updates breaking the ui
+        self.publishing_enabled = False
+
+        if ('analog' in self.state) and (analog_id in self.state['analog']):
+            # Increase volume if current volume is lower than target volume
+            if (self.state['analog'][analog_id] < value):
+                self.crestron_client.sendData('digital', increase_button, 'true')
+                self.publishing_enabled = False
+                while True:
+                    time.sleep(0.2)
+                    try:
+                        if self.state['analog'][analog_id] >= value:
+                            self.publishing_enabled = True
+                            self.crestron_client.sendData('digital', increase_button, 'false')
+                            self.client.publish('crestron/analog/%s/state' % (analog_id), self.state['analog'][analog_id])
+                            return
+                        else:
+                            self.crestron_client.sendData('digital', increase_button, 'true')
+                    except:
+                        continue
+            else:
+                # Decrease volume if current volume is greater than target volume
+                self.crestron_client.sendData('digital', decrease_button, 'true')
+                self.publishing_enabled = False
+                while True:
+                    time.sleep(0.2)
+                    try:
+                        if self.state['analog'][analog_id] <= value:
+                            self.publishing_enabled = True
+                            self.crestron_client.sendData('digital', decrease_button, 'false')
+                            self.client.publish('crestron/analog/%s/state' % (analog_id), self.state['analog'][analog_id])
+                            return
+                        else:
+                            self.crestron_client.sendData('digital', decrease_button, 'true')
+                    except:
+                        continue
+        else:
+            # State not stored so we press a button to populate it then call this method again.
+            self.crestron_client.button_press(increase_button)
+            self.crestron_client.button_press(decrease_button)
+            time.sleep(5)
+            self.cb_analog(client, userdata, msg)
+            
 
     @_callback
     def cb_button(self, client, userdata, msg):
-        logging.debug("MQTT button: {}".format(msg))
+        logging.debug("MQTT button: {} {}".format(msg.topic, msg.payload))
+
         button_id = msg.topic.split("/")[-1]
-        #data = json.loads(msg.payload)
+
+        if button_id == "payload":
+            data = json.loads(msg.payload)
+            button_id = data['button_id']
+            if 'hold' in data:
+                self.crestron_client.sendData('digital', button_id, 'true')
+                return
+            if 'release' in data:
+                self.crestron_client.sendData('digital', button_id, 'false')
+                return
+
         self.crestron_client.button_press(button_id)
 
     def on_crestron_data_received(self, data_type, id, value):
@@ -96,8 +164,15 @@ class CrestronMQTT:
         #    'id': id,
         #    'value': value
         #}
-        #self.client.publish('crestron/data', json.dumps(payload))
-        self.client.publish('crestron/%s/%s/state' % (data_type, id), value)
+        # store state locally
+        if data_type not in self.state:
+            self.state[data_type] = {}
+        self.state[data_type][id] = value
+
+        if self.publishing_enabled:
+            logging.debug("publising: " + 'crestron/%s/%s/state' % (data_type, id) + " " + str(value))
+            # send state updates to mqtt subscribers
+            self.client.publish('crestron/%s/%s/state' % (data_type, id), value)
 
 def setup_logging():
     # Setup logging
