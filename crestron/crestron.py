@@ -73,9 +73,11 @@ class CrestronClient(asyncio.Protocol):
         self.loop.close()
 
     def stop_heartbeats(self):
+        logging.debug("stop_heartbeats")
         self.heartbeat_task.cancel()
 
     def start_heartbeats(self, timeout=None):
+        logging.debug("start_heartbeats")
         self.heartbeat_task = asyncio.ensure_future(self.__heartbeat(), loop=self.loop)
         self.heartbeat_timeout_task = asyncio.ensure_future(self.__heartbeat_timeout(timeout), loop=self.loop)
 
