@@ -6,12 +6,13 @@ import logging
 import time
 import json
 import datetime
-from utils import num_map, set_list_value
+import signal
+from myutils import num_map, set_list_value
 
 
 logging.basicConfig(
     format='%(asctime)s %(levelname)-8s %(message)s',
-    level=logging.INFO,
+    level=logging.DEBUG,
     datefmt='%Y-%m-%d %H:%M:%S')
 
 
@@ -24,7 +25,7 @@ class CrestronClient(asyncio.Protocol):
         self.is_connected = False
         self.heartbeat_task = None
         self.pause_heartbeats = False
-        self.heartbeat_timeout = 10 # seconds
+        self.heartbeat_timeout = 60 # seconds
         self.last_activity = time.time()
         self.states = {
             'serial': [],
@@ -48,7 +49,7 @@ class CrestronClient(asyncio.Protocol):
         logging.debug("Connection lost")
         self.is_open = False
         self.is_connected = False
-        asyncio.create_task(self.__shutdown())
+        self.__shutdown()
 
     def data_received(self, data):
         if data:
@@ -73,33 +74,32 @@ class CrestronClient(asyncio.Protocol):
         logging.debug("asyncio.set_event_loop")
         asyncio.set_event_loop(self.loop)
 
+        self.loop.set_exception_handler(self.__handle_exception)
+
         logging.debug("self.loop.create_connection")
         coro = self.loop.create_connection(lambda: self, self.crestron_ip, self.crestron_port)
         
         logging.debug("self.loop.run_until_complete")
-        server = self.loop.run_until_complete(coro)
+        self.loop.run_until_complete(coro)
         
         # Start the heartbeat thread to keep the connection alive
         logging.debug("self.loop.create_task")
-        task = self.loop.create_task(self.start_heartbeats(heartbeat_timeout))
+        self.start_heartbeats(heartbeat_timeout)
 
         logging.debug("self.loop.run_forever")
         self.loop.run_forever()
 
-        if task.exception():
-            raise task.exception()
-
-        logging.debug("self.loop.close")
-        self.loop.close()
+        self.__shutdown()
 
     def stop_heartbeats(self):
         logging.debug("stop_heartbeats")
         self.heartbeat_task.cancel()
 
-    async def start_heartbeats(self, timeout=None):
+    def start_heartbeats(self, timeout=None):
         logging.debug("start_heartbeats")
-        self.heartbeat_task = asyncio.create_task(self.__heartbeat())
-        self.heartbeat_timeout_task = asyncio.create_task(self.__heartbeat_timeout(timeout))
+        self.heartbeat_task = self.loop.create_task(self.__heartbeat())
+
+        self.heartbeat_timeout_task = self.loop.create_task(self.__heartbeat_timeout(timeout))
 
     def crestron_disconnected(self, xml):
         pass
@@ -134,12 +134,20 @@ class CrestronClient(asyncio.Protocol):
 
     ## Private methods
 
+    def __handle_exception(self, context):
+        # context["message"] will always be there; but context["exception"] may not
+        msg = context.get("exception", context["message"])
+        logging.error(f"Caught exception: {msg}")
+        logging.info("Shutting down...")
+        asyncio.create_task(self.__shutdown())
+
     async def __shutdown(self):
         """Cleanup tasks tied to the service's shutdown."""
-        logging.debug("shutting down async tasks")
         tasks = [t for t in asyncio.all_tasks() if t is not
                 asyncio.current_task()]
+
         [task.cancel() for task in tasks]
+
         logging.info(f"Cancelling {len(tasks)} outstanding tasks")
         await asyncio.gather(*tasks, return_exceptions=True)
         self.loop.stop()
