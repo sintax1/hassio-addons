@@ -21,6 +21,6 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
-COPY main.py crestron.py utils.py ./
+COPY main.py crestron.py myutils.py ./
 
 CMD ["python", "main.py"]
