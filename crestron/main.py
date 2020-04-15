@@ -65,12 +65,16 @@ class CrestronMQTT:
         self.crestron_connect()
 
         while not self.crestron_client.is_connected:
+            logging.debug("waiting")
             time.sleep(1)
 
-        self.client.message_callback_add('crestron/digital/+', self.cb_button)
+        logging.debug("Subscribing to MQTT topics")
+        self.client.message_callback_add('crestron/digital/+', self.cb_digital)
+        self.client.message_callback_add('crestron/button/+', self.cb_button)
         self.client.message_callback_add('crestron/analog/+', self.cb_analog)
 
-        self.client.subscribe("crestron/#")
+        self.client.subscribe("crestron/+/+")
+        #self.client.subscribe("crestron/#")
 
         self.publish('crestron/connected/0/state', True)
 
@@ -95,12 +99,22 @@ class CrestronMQTT:
 
     @_callback
     def cb_analog(self, client, userdata, msg):
-        logging.debug("MQTT analog: {} {}".format(msg.topic, msg.payload))
+        logging.debug("MQTT analog IN: {} {}".format(msg.topic, msg.payload))
 
-        analog_id = int(msg.topic.split('/')[2])
+        analog_id = int(msg.topic.split('/')[-1])
         value = json.loads(msg.payload)
 
         self.crestron_client.sendData('analog', analog_id, value)
+
+    @_callback
+    def cb_digital(self, client, userdata, msg):
+        logging.debug("MQTT digital IN: {} {}".format(msg.topic, msg.payload))
+        digital_id = int(msg.topic.split("/")[-1])
+        value = json.loads(msg.payload)
+        logging.debug("digital_id: {}".format(digital_id))
+        logging.debug("value: {}".format(value))
+
+        self.crestron_client.sendData('digital', digital_id, value)
 
     @_callback
     def cb_button(self, client, userdata, msg):
@@ -111,12 +125,6 @@ class CrestronMQTT:
         if button_id == "payload":
             data = json.loads(msg.payload)
             button_id = data['button_id']
-            if 'hold' in data:
-                self.crestron_client.sendData('digital', button_id, 'true')
-                return
-            if 'release' in data:
-                self.crestron_client.sendData('digital', button_id, 'false')
-                return
 
         self.crestron_client.button_press(button_id)
 
@@ -126,11 +134,6 @@ class CrestronMQTT:
             self.client.publish(topic, payload)
 
     def on_crestron_data_received(self, data_type, id, value):
-        #payload = {
-        #    'data_type': data_type,
-        #    'id': id,
-        #    'value': value
-        #}
         # store state locally
         if data_type not in self.state:
             self.state[data_type] = {}
